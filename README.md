@@ -1,2 +1,10 @@
-# mldp_tp1
-TP1 de Machine learning &amp; differentiable programming
+# TP1 - Machine learning & differentiable programming
+
+## Contributors
+
+- Armelle COUTAUX
+- Enzo DAMION
+
+## Exercice
+
+https://olki.loria.fr/cerisara/mines/2022intro.html#/tp

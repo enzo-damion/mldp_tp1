@@ -8,3 +8,5 @@
 ## Exercice
 
 https://olki.loria.fr/cerisara/mines/2022intro.html#/tp
+
+Function : $f(u,v)=sin(u-v)$

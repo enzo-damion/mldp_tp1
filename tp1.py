@@ -62,10 +62,10 @@ def test(model, test_data):
     plt.show()
 
     # Plot 3d graph
-    # fig = plt.figure()
-    # ax = fig.add_subplot(111, projection='3d')
-    # ax.plot(x[:5000,0],x[:5000,1],haty[:5000], ".b", markersize=0.5)
-    # plt.show()
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection='3d')
+    ax.plot(x[:5000,0],x[:5000,1],haty[:5000], ".b", markersize=0.5)
+    plt.show()
     return loss
 
 
@@ -86,7 +86,7 @@ def train(model, train_data, max_epoch):
         optim.step()
         plot_values["epoch"].append(epoch)
         plot_values["loss"].append(loss.item())
-        
+
     # Plot loss evolution
     _, ax = plt.subplots()
     ax.plot(plot_values["epoch"], plot_values["loss"])

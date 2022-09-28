@@ -39,61 +39,74 @@ class Net(nn.Module):
         return x
 
 
-def test(model, test_data):
+def test(model, test_data, graph=False):
     x = torch.FloatTensor(test_data[:,:-1])
     y = torch.FloatTensor(test_data[:,-1])
-    haty = model(x).view(150000)
+    haty = model(x).view(x.size()[0])
     criterion = nn.MSELoss()
     loss = criterion(haty, y)
+    r2_score = 1- torch.sum((y-haty)**2) / torch.sum((y-y.float().mean())**2)
+    if graph:
+        # Prepare plot
+        y = y.detach().numpy()
+        haty = haty.detach().numpy()
+        mpl.rcParams['agg.path.chunksize'] = 10000 # Increase matplotlib max render
 
-    # Prepare plot
-    y = y.detach().numpy()
-    haty = haty.detach().numpy()
-    mpl.rcParams['agg.path.chunksize'] = 10000
+        # Plot regression line
+        _, ax = plt.subplots()
+        ax.plot(y, haty, ".b", markersize=0.1)
+        b, a = np.polyfit(y, haty, deg=1)  # Compute the coef of the regression line
+        xseq = np.linspace(-1, 1, num=100)
+        ax.plot(xseq, a + b * xseq, color="k")
+        ax.set(xlabel='Gold labels', ylabel='Prediction', title="Regression line\nloss = {:.7f} & score = {:.4f}".format(loss, r2_score))
+        ax.grid()
+        plt.show()
 
-    # Plot regression line
-    _, ax = plt.subplots()
-    ax.plot(y, haty, ".b", markersize=0.1)
-    b, a = np.polyfit(y, haty, deg=1)
-    xseq = np.linspace(-1, 1, num=100)
-    ax.plot(xseq, a + b * xseq, color="k")
-    ax.set(xlabel='Gold labels', ylabel='Prediction', title='Regression line')
-    ax.grid()
-    plt.show()
-
-    # Plot 3d graph
-    fig = plt.figure()
-    ax = fig.add_subplot(111, projection='3d')
-    ax.plot(x[:5000,0],x[:5000,1],haty[:5000], ".b", markersize=0.5)
-    plt.show()
-    return loss
+        # Plot 3d graph
+        fig = plt.figure()
+        ax = fig.add_subplot(111, projection='3d')
+        n_point = min(x.size()[0], 5000) # Number of points plotted
+        ax.plot(x[:n_point,0],x[:n_point,1],haty[:n_point], ".b", markersize=0.5)
+        plt.show()
+    return loss, r2_score
 
 
-def train(model, train_data, max_epoch):
-    optim = torch.optim.Adam(model.parameters(), lr=0.05)
+def train(model, train_data, val_data, max_epoch):
+    optim = torch.optim.Adam(model.parameters(), lr=0.01)
     criterion = nn.MSELoss()
-    plot_values = {"epoch": [], "loss": []}
+    plot_values = {"epoch": [], "loss": [], "val_loss":[], "val_score":[]}
 
     for epoch in range(max_epoch):
+        # Optimization
         optim.zero_grad()
         np.random.shuffle(train_data)
         x = torch.FloatTensor(train_data[:,:-1])
         y = torch.FloatTensor(train_data[:,-1])
-        haty = model(x).view(700000)
+        haty = model(x).view(x.size()[0])
         loss = criterion(haty, y)
-        print(f"epoch {epoch}: loss = {loss}")
         loss.backward()
         optim.step()
+
+        # Training monitoring
+        val_loss, val_score = test(model,val_data)
         plot_values["epoch"].append(epoch)
         plot_values["loss"].append(loss.item())
+        plot_values["val_loss"].append(val_loss.item())
+        plot_values["val_score"].append(val_score.item())
+        print(f"epoch {epoch}: loss = {loss:.7f}, val_loss = {val_loss:.7f}, val_score = {val_score:.4f}")
 
     # Plot loss evolution
     _, ax = plt.subplots()
-    ax.plot(plot_values["epoch"], plot_values["loss"])
-    ax.set(xlabel='epoch', ylabel='MSE loss', title='MSE loss evolution with training')
+    ax.plot(plot_values["epoch"], plot_values["loss"], 'b', label='training loss')
+    ax.plot(plot_values["epoch"], plot_values["val_loss"], 'g', label='validation loss')
+    ax.set(xlabel='epoch', ylabel='MSE loss', title='Training supervision')
     ax.axis(ymin=0)
     ax.grid()
-    # fig.savefig("loss.png")
+    ax.legend()
+    ax2 = ax.twinx()
+    ax2.plot(plot_values["val_score"], 'k', label='r2 score')
+    ax2.set_ylabel("R2 score")
+    ax2.axis(ymax=1)
     plt.show()
 
 
@@ -106,12 +119,11 @@ def main():
     model.load_state_dict(torch.load('./model2.pth'))
 
     # Train and save model
-    # train(model, train_data, 2000)
-    # torch.save(model.state_dict(), "./model2.pth")
+    # train(model, train_data, val_data, 1000)
+    # torch.save(model.state_dict(), "./model_2hidlayer.pth")
 
     # Test model
-    loss = test(model, test_data)
-    print(f"test loss = {loss}")
+    test(model, test_data, graph=True)
 
 
 if __name__ == "__main__":

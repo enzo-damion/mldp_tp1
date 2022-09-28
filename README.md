@@ -15,3 +15,4 @@ Function : $f(u,v)=sin(u-v)$
 
 https://www.elastic.co/guide/en/machine-learning/master/dfa-regression-lossfunction.html
 https://www.python-graph-gallery.com/scatterplot-with-regression-fit-in-matplotlib
+https://towardsdatascience.com/polynomial-regression-using-pytorch-from-scratch-500b7887b0ed

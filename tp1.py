@@ -3,6 +3,7 @@ import torch
 import torch.nn as nn
 import matplotlib.pyplot as plt
 import matplotlib as mpl
+from matplotlib import cm
 
 
 def genData():
@@ -18,7 +19,7 @@ def genData():
             cpt+=1
     # Shuffle and split dataset
     np.random.shuffle(dataset)
-    train_data = dataset[:int(n_data*0.7)]
+    train_data = dataset[:int(n_data*0.7)] 
     val_data = dataset[int(n_data*0.7):int(n_data*0.85)]
     test_data = dataset[int(n_data*0.85):]
     return train_data, val_data, test_data
@@ -54,7 +55,7 @@ def test(model, test_data, graph=False):
 
         # Plot regression line
         _, ax = plt.subplots()
-        ax.plot(y, haty, ".b", markersize=0.1)
+        ax.plot(y, haty, ".g", markersize=0.1)
         b, a = np.polyfit(y, haty, deg=1)  # Compute the coef of the regression line
         xseq = np.linspace(-1, 1, num=100)
         ax.plot(xseq, a + b * xseq, color="k")
@@ -67,6 +68,15 @@ def test(model, test_data, graph=False):
         ax = fig.add_subplot(111, projection='3d')
         n_point = min(x.size()[0], 5000) # Number of points plotted
         ax.plot(x[:n_point,0],x[:n_point,1],haty[:n_point], ".b", markersize=0.5)
+        plt.show()
+        
+        #show reference f(X,Y) fonction
+        fig2, ax2 = plt.subplots(subplot_kw={"projection": "3d"})
+        X = np.arange(-5, 5, 0.25)
+        Y = np.arange(-5, 5, 0.25)
+        X, Y = np.meshgrid(X, Y)
+        Z = np.sin(X - Y)
+        surf = ax2.plot_surface(X, Y, Z, cmap=cm.coolwarm, linewidth=0, antialiased=False)
         plt.show()
     return loss, r2_score
 
@@ -104,9 +114,10 @@ def train(model, train_data, val_data, max_epoch):
     ax.grid()
     ax.legend()
     ax2 = ax.twinx()
-    ax2.plot(plot_values["val_score"], 'k', label='r2 score')
+    ax2.plot(plot_values["epoch"],plot_values["val_score"], 'k', label='r2 score')
     ax2.set_ylabel("R2 score")
     ax2.axis(ymax=1)
+    ax2.legend()
     plt.show()
 
 
@@ -123,6 +134,8 @@ def main():
     # torch.save(model.state_dict(), "./model_2hidlayer.pth")
 
     # Test model
+    #max_data = 600
+    #train(model, train_data, val_data, max_data)
     test(model, test_data, graph=True)
 
 
